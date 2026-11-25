@@ -110,13 +110,8 @@ const pathLine=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(
 const goal=new THREE.Mesh(new THREE.CylinderGeometry(.85,.85,.45,32),mat(0x9b3345));goal.position.set(8,.25,5);scene.add(goal);
 const goalRing=new THREE.Mesh(new THREE.TorusGeometry(.9,.08,8,40),mats.gold);goalRing.rotation.x=Math.PI/2;goalRing.position.set(8,.5,5);scene.add(goalRing);
 
-const unitDefs=[
- {id:'cam',name:'카메라맨',emoji:'📷',rarity:'일반',chance:48,color:0x4d718f,damage:12,range:5.1,rate:1.05,desc:'안정적인 기본 원거리 공격'},
- {id:'speak',name:'스피커맨',emoji:'🔊',rarity:'희귀',chance:28,color:0x9c354d,damage:25,range:4.3,rate:1.35,desc:'강한 음파 공격'},
- {id:'tv',name:'TV맨',emoji:'📺',rarity:'에픽',chance:17,color:0x6c56b4,damage:48,range:6.1,rate:1.7,desc:'긴 사거리의 에너지 공격'},
- {id:'titan',name:'타이탄 카메라맨',emoji:'🤖',rarity:'전설',chance:7,color:0xb78a35,damage:115,range:7,rate:2.1,desc:'느리지만 강력한 광선 공격'}
-];
-let coins=500,lives=20,wave=0,selectedUnit='cam',selectedTower=null,owned={cam:1,speak:0,tv:0,titan:0},towers=[],enemies=[],shots=[],waveActive=false,spawnLeft=0,spawnTimer=0,gameOver=false;
+const unitDefs=[];
+let coins=500,lives=20,wave=0,selectedUnit=null,selectedTower=null,owned={},towers=[],enemies=[],shots=[],waveActive=false,spawnLeft=0,spawnTimer=0,gameOver=false;
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let drag=false,lastX=0,lastY=0,orbit={x:12,z:18};
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.opacity=0,1800);}
 function updateStats(){document.getElementById('coins').textContent=coins;document.getElementById('lives').textContent=lives;document.getElementById('wave').textContent=wave;}
