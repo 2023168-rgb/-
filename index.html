@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>토타디 - 3D 타워 디펜스</title>
+<style>
+:root{color-scheme:dark;--panel:rgba(12,20,35,.88);--line:rgba(151,190,255,.2);--cyan:#55e5ff;--gold:#ffd66b}
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#101a2b;color:#f4f7ff;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
+#game{position:fixed;inset:0}canvas{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(12px);box-shadow:0 10px 30px #0005}
+#top{position:fixed;top:12px;left:12px;right:12px;display:flex;gap:10px;align-items:center;justify-content:space-between;pointer-events:none}
+#brand{padding:9px 15px;font-weight:900;font-size:20px;letter-spacing:1px;color:var(--cyan)}
+#stats{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.stat{padding:9px 13px;font-weight:800;font-size:13px}
+#left{position:fixed;left:12px;top:76px;width:225px;padding:13px}
+h3{font-size:14px;margin:0 0 10px;color:#b8d5ff}
+#unitList{display:grid;gap:7px;max-height:43vh;overflow:auto}
+.unit{display:flex;align-items:center;gap:8px;text-align:left;width:100%;padding:8px;border:1px solid #ffffff18;border-radius:10px;background:#ffffff09;color:white;cursor:pointer}
+.unit.selected{border-color:var(--cyan);background:#55e5ff20}
+.unit .emoji{font-size:22px;width:30px;text-align:center}
+.unit small{display:block;color:#aab8d1;font-size:11px}
+#right{position:fixed;right:12px;top:76px;width:205px;padding:13px}
+button{border:1px solid #ffffff20;background:#263b5d;color:white;padding:10px 12px;border-radius:10px;font-weight:800;cursor:pointer}
+button:hover{filter:brightness(1.18)}button:disabled{opacity:.4;cursor:not-allowed}
+.primary{background:linear-gradient(135deg,#087d9c,#3158a9);border:0}
+.gold{background:linear-gradient(135deg,#9a6816,#bd8b2b);border:0;color:#fff7d9}
+.action{width:100%;margin:4px 0}
+#bottom{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:min(680px,calc(100vw - 24px));padding:11px 13px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+#hint{font-size:12px;color:#c1cce0;line-height:1.5;flex:1}
+#selectedInfo{font-size:12px;color:#d8e8ff;min-height:30px;margin:8px 0}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);padding:10px 16px;background:#0b1527ed;border:1px solid #55e5ff66;border-radius:20px;opacity:0;transition:opacity .2s;pointer-events:none;font-weight:700;z-index:10}
+#modal{position:fixed;inset:0;display:none;place-items:center;background:#0009;z-index:20}
+#modal .box{width:min(390px,calc(100vw - 30px));padding:22px;text-align:center}
+#modal h2{margin:0 0 8px}.result{font-size:54px;margin:12px}
+#waveMsg{color:var(--gold);font-weight:800;font-size:12px;margin:6px 0}
+@media(max-width:700px){#left{top:auto;bottom:105px;left:8px;width:165px;padding:9px}#right{top:70px;right:8px;width:155px;padding:9px}#unitList{max-height:26vh}.stat{padding:7px 9px;font-size:11px}#brand{font-size:16px;padding:8px}#bottom{bottom:7px;padding:8px}button{padding:8px;font-size:11px}#hint{font-size:10px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="top">
+ <div id="brand" class="panel">🚽 토타디 <span style="font-size:10px;color:#9fb4d4">3D DEFENSE</span></div>
+ <div id="stats">
+  <div class="stat panel">🪙 <span id="coins">500</span></div>
+  <div class="stat panel">❤️ <span id="lives">20</span></div>
+  <div class="stat panel">🌊 웨이브 <span id="wave">0</span></div>
+ </div>
+</div>
+<aside id="left" class="panel">
+ <h3>🧍 내 유닛 보관함</h3>
+ <div id="unitList"></div>
+ <div id="selectedInfo">유닛을 선택하고 맵의 빈 배치 구역을 눌러!</div>
+</aside>
+<aside id="right" class="panel">
+ <h3>🎮 작전 메뉴</h3>
+ <button class="action gold" id="gacha">🎲 유닛 뽑기 · 100</button>
+ <button class="action primary" id="waveBtn">▶ 웨이브 시작</button>
+ <button class="action" id="upgrade" disabled>⬆ 선택 유닛 강화</button>
+ <button class="action" id="sell" disabled>↩ 선택 유닛 회수</button>
+ <button class="action" id="coop">👥 협동 모드</button>
+ <div id="waveMsg">배치 후 웨이브를 시작해!</div>
+</aside>
+<div id="bottom" class="panel">
+ <div id="hint">유닛 선택 → 파란 배치 구역 클릭. 유닛은 사거리 안의 적을 자동 공격해.<br>마우스로 드래그해 시점을 돌리고 휠로 확대/축소할 수 있어.</div>
+ <button id="reset">↻ 다시 시작</button>
+</div>
+<div id="toast"></div>
+<div id="modal"><div class="box panel"><h2 id="modalTitle">유닛 획득!</h2><div class="result" id="modalEmoji">📷</div><div id="modalName"></div><p id="modalDesc" style="color:#aebdd4;font-size:13px"></p><button class="primary" id="modalClose">확인</button></div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+
+const root=document.getElementById('game');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x101a2b);scene.fog=new THREE.Fog(0x101a2b,24,48);
+const camera=new THREE.PerspectiveCamera(43,innerWidth/innerHeight,.1,100);camera.position.set(12,17,18);camera.lookAt(0,0,0);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;root.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xc9e8ff,0x26334b,2));
+const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(-8,15,9);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);scene.add(sun);
+const mat=(color,rough=.7,metal=0)=>new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});
+const mats={ground:mat(0x24344a),road:mat(0x596579),edge:mat(0x93a6bd),pad:mat(0x17627b),pad2:mat(0x24bad0),black:mat(0x121b29),white:mat(0xe9f0f8),skin:mat(0xd8a17a),red:mat(0xff5757),blue:mat(0x48bfff),gold:mat(0xffc94f,.35,.25),green:mat(0x50d69a)};
+const ground=new THREE.Mesh(new THREE.BoxGeometry(23,.35,17),mats.ground);ground.position.y=-.25;ground.receiveShadow=true;scene.add(ground);
+const grid=new THREE.GridHelper(23,23,0x45617e,0x344b66);grid.position.y=-.065;scene.add(grid);
+const path=[new THREE.Vector3(-10,0,-5),new THREE.Vector3(-4,0,-5),new THREE.Vector3(-4,0,2),new THREE.Vector3(2,0,2),new THREE.Vector3(2,0,-4),new THREE.Vector3(8,0,-4),new THREE.Vector3(8,0,5)];
+for(let i=0;i<path.length-1;i++){const a=path[i],b=path[i+1],d=b.clone().sub(a),len=d.length();const road=new THREE.Mesh(new THREE.BoxGeometry(len+.12,.08,2.05),mats.road);road.position.set((a.x+b.x)/2,.005,(a.z+b.z)/2);road.rotation.y=-Math.atan2(d.z,d.x);road.receiveShadow=true;scene.add(road);const stripe=new THREE.Mesh(new THREE.BoxGeometry(len,.012,.07),mat(0xbac8d8));stripe.position.set((a.x+b.x)/2,.055,(a.z+b.z)/2);stripe.rotation.y=road.rotation.y;scene.add(stripe);}
+const pads=[[-8,-2],[-6,0],[-2,-3],[-1,4],[0,-1],[4,0],[5,-1],[6,2],[9,1],[-7,4]];
+const padMeshes=[];
+pads.forEach((p,i)=>{const base=new THREE.Mesh(new THREE.CylinderGeometry(.83,.9,.22,32),mats.pad);base.position.set(p[0],.04,p[1]);base.receiveShadow=true;base.castShadow=true;scene.add(base);const ring=new THREE.Mesh(new THREE.TorusGeometry(.68,.045,8,36),mats.pad2);ring.rotation.x=Math.PI/2;ring.position.set(p[0],.17,p[1]);scene.add(ring);base.userData.padIndex=i;padMeshes.push(base);});
+const pathLine=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path),100,.035,6,false),mat(0xf2c96d));pathLine.position.y=.09;scene.add(pathLine);
+const goal=new THREE.Mesh(new THREE.CylinderGeometry(.85,.85,.45,32),mat(0x9b3345));goal.position.set(8,.25,5);scene.add(goal);
+const goalRing=new THREE.Mesh(new THREE.TorusGeometry(.9,.08,8,40),mats.gold);goalRing.rotation.x=Math.PI/2;goalRing.position.set(8,.5,5);scene.add(goalRing);
+
+const unitDefs=[
+ {id:'cam',name:'카메라맨',emoji:'📷',rarity:'일반',chance:48,color:0x4d718f,damage:12,range:5.1,rate:1.05,desc:'안정적인 기본 원거리 공격'},
+ {id:'speak',name:'스피커맨',emoji:'🔊',rarity:'희귀',chance:28,color:0x9c354d,damage:25,range:4.3,rate:1.35,desc:'강한 음파 공격'},
+ {id:'tv',name:'TV맨',emoji:'📺',rarity:'에픽',chance:17,color:0x6c56b4,damage:48,range:6.1,rate:1.7,desc:'긴 사거리의 에너지 공격'},
+ {id:'titan',name:'타이탄 카메라맨',emoji:'🤖',rarity:'전설',chance:7,color:0xb78a35,damage:115,range:7,rate:2.1,desc:'느리지만 강력한 광선 공격'}
+];
+let coins=500,lives=20,wave=0,selectedUnit='cam',selectedTower=null,owned={cam:1,speak:0,tv:0,titan:0},towers=[],enemies=[],shots=[],waveActive=false,spawnLeft=0,spawnTimer=0,gameOver=false;
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let drag=false,lastX=0,lastY=0,orbit={x:12,z:18};
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.opacity=1;clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.opacity=0,1800);}
+function updateStats(){document.getElementById('coins').textContent=coins;document.getElementById('lives').textContent=lives;document.getElementById('wave').textContent=wave;}
+function renderUnits(){const box=document.getElementById('unitList');box.innerHTML='';unitDefs.forEach(u=>{if(!owned[u.id])return;const b=document.createElement('button');b.className='unit'+(selectedUnit===u.id?' selected':'');b.innerHTML='<span class="emoji">'+u.emoji+'</span><span><b>'+u.name+'</b><small>'+u.rarity+' · 보유 '+owned[u.id]+'</small></span>';b.onclick=()=>{selectedUnit=u.id;selectedTower=null;updateSelection();renderUnits();};box.appendChild(b);});}
+function updateSelection(){const inf=document.getElementById('selectedInfo');if(selectedTower){const t=selectedTower;inf.textContent=t.def.name+' · Lv.'+t.level+' · 공격력 '+Math.round(t.def.damage*(1+(t.level-1)*.55));document.getElementById('upgrade').disabled=coins<Math.round(90*t.level);document.getElementById('sell').disabled=false;}else{const u=unitDefs.find(x=>x.id===selectedUnit);inf.textContent=u?u.name+' 선택됨 · 빈 파란 구역을 눌러 배치':'유닛을 선택해';document.getElementById('upgrade').disabled=true;document.getElementById('sell').disabled=true;}}
+function box(parent,w,h,d,material,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function sphere(parent,r,material,x,y,z){const m=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),material);m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m;}
+function makeTower(def,x,z){const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);const bodyMat=mat(def.color),dark=mat(0x182435),skin=mat(0xd8a17a);const body=box(g,.58,.85,.42,bodyMat,0,.85,0);const head=new THREE.Group();head.position.set(0,1.55,0);g.add(head);
+ if(def.id==='cam'){box(head,.66,.48,.48,dark,0,0,0);box(head,.23,.18,.08,mat(0x9bdcff),0,.03,.27);const lens=new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.16,20),mat(0x3c5268,.3,.5));lens.rotation.x=Math.PI/2;lens.position.set(0,0,.34);head.add(lens);}
+ else if(def.id==='speak'){box(head,.6,.48,.4,dark,0,0,0);for(let s of [-1,1]){const sp=new THREE.Mesh(new THREE.CylinderGeometry(.13,.18,.12,20),mat(0xbfcbd8,.35,.25));sp.rotation.z=Math.PI/2;sp.position.set(s*.37,0,0);head.add(sp);}}
+ else if(def.id==='tv'){box(head,.72,.58,.35,dark,0,0,0);box(head,.58,.4,.035,mat(0x8a7aff,.3,.25),0,0,.2);for(let i=0;i<3;i++)box(head,.04,.25,.02,mat(0xc8c1ff),-.18+i*.18,0,.23);}
+ else{box(head,.82,.7,.55,mat(0x293d53),0,0,0);box(head,.58,.38,.04,mat(0x77dfff,.25,.4),0,.02,.3);const crown=box(head,.25,.3,.24,mats.gold,0,.48,0);}
+ const arms=[];for(let s of [-1,1]){const arm=new THREE.Group();arm.position.set(s*.38,1.12,0);g.add(arm);box(arm,.18,.58,.2,bodyMat,0,-.23,0);sphere(arm,.12,skin,0,-.52,.03);arms.push(arm);}
+ const legs=[];for(let s of [-1,1]){const leg=box(g,.2,.48,.22,dark,s*.17,.25,0);legs.push(leg);}
+ const aura=new THREE.Mesh(new THREE.TorusGeometry(.88,.025,6,40),new THREE.MeshBasicMaterial({color:0x55e5ff,transparent:true,opacity:.65}));aura.rotation.x=Math.PI/2;aura.position.y=.18;g.add(aura);aura.visible=false;
+ return {group:g,def,level:1,cool:Math.random()*.4,arms,head,body,aura,rangeMesh:null,x,z};
+}
+function placeTower(index){const p=pads[index];if(!p)return;const u=unitDefs.find(x=>x.id===selectedUnit);if(!u||owned[u.id]<=0){toast('보유한 유닛이 없어!');return;}if(towers.some(t=>Math.hypot(t.x-p[0],t.z-p[1])<.2)){toast('이미 유닛이 배치되어 있어!');return;}owned[u.id]--;const t=makeTower(u,p[0],p[1]);towers.push(t);selectedTower=t;renderUnits();updateSelection();toast(u.name+' 배치 완료!');}
+function makeToilet(){const g=new THREE.Group();const baseMat=mat(0xe8edf2),rimMat=mat(0xffffff,.25),skinMat=mat(0xb77c5b);const bowl=new THREE.Mesh(new THREE.CylinderGeometry(.48,.38,.55,24),baseMat);bowl.position.y=.35;g.add(bowl);const seat=new THREE.Mesh(new THREE.TorusGeometry(.43,.1,10,28),rimMat);seat.rotation.x=Math.PI/2;seat.position.y=.64;g.add(seat);const head=sphere(g,.34,skinMat,0,.95,0);sphere(g,.055,mats.white,-.12,1.02,.28);sphere(g,.055,mats.white,.12,1.02,.28);sphere(g,.025,mats.black,-.12,1.02,.33);sphere(g,.025,mats.black,.12,1.02,.33);const mouth=box(g,.17,.045,.04,mat(0x39252a),0,.83,.3);g.traverse(o=>{if(o.isMesh)o.castShadow=true;});scene.add(g);return {group:g,segment:0,progress:0,hp:65+wave*18,maxHp:65+wave*18,speed:.95+Math.min(wave*.025,.45),dead:false,hitFlash:0};}
+function healthBar(e){const bg=new THREE.Mesh(new THREE.PlaneGeometry(.9,.11),mat(0x321f2b));const fg=new THREE.Mesh(new THREE.PlaneGeometry(.86,.07),mat(0x53e08d));bg.position.set(0,1.55,0);fg.position.set(0,1.55,.01);e.group.add(bg,fg);e.hpBg=bg;e.hpFg=fg;}
+function spawnEnemy(){const e=makeToilet();healthBar(e);e.group.position.copy(path[0]);enemies.push(e);}
+function shoot(t,e){const from=new THREE.Vector3(t.x,1.75,t.z),to=e.group.position.clone();to.y=.9;const color=t.def.id==='speak'?0xff6e9b:t.def.id==='tv'?0xa88bff:t.def.id==='titan'?0xffdf77:0x73dfff;const orb=new THREE.Mesh(new THREE.SphereGeometry(t.def.id==='titan'?.16:.09,12,10),new THREE.MeshBasicMaterial({color}));orb.position.copy(from);scene.add(orb);shots.push({mesh:orb,target:e,from,damage:t.def.damage*(1+(t.level-1)*.55),speed:t.def.id==='titan'?13:17,color});t.cool=t.def.rate;}
+function hit(e,damage){if(e.dead)return;e.hp-=damage;e.hitFlash=.12;if(e.hp<=0){e.dead=true;coins+=18+Math.floor(wave*1.5);updateStats();}else{e.hpFg.scale.x=Math.max(.01,e.hp/e.maxHp);e.hpFg.position.x=-(.86*(1-e.hp/e.maxHp))/2;}}
+function startWave(){if(waveActive||gameOver)return;wave++;waveActive=true;spawnLeft=5+wave*2;spawnTimer=.3;document.getElementById('waveMsg').textContent='적 접근 중! 남은 적 '+spawnLeft;document.getElementById('waveBtn').disabled=true;updateStats();}
+document.getElementById('waveBtn').onclick=startWave;
+document.getElementById('gacha').onclick=()=>{if(coins<100){toast('코인이 부족해!');return;}coins-=100;const roll=Math.random()*100;let acc=0,got=unitDefs[0];for(const u of unitDefs){acc+=u.chance;if(roll<=acc){got=u;break;}}owned[got.id]++;updateStats();renderUnits();document.getElementById('modalEmoji').textContent=got.emoji;document.getElementById('modalName').textContent=got.name+' · '+got.rarity;document.getElementById('modalDesc').textContent=got.desc;document.getElementById('modal').style.display='grid';};
+document.getElementById('modalClose').onclick=()=>document.getElementById('modal').style.display='none';
+document.getElementById('upgrade').onclick=()=>{if(!selectedTower)return;const cost=Math.round(90*selectedTower.level);if(coins<cost)return;coins-=cost;selectedTower.level++;updateStats();updateSelection();toast('강화 완료! 공격력이 올랐어.');};
+document.getElementById('sell').onclick=()=>{if(!selectedTower)return;const t=selectedTower;owned[t.def.id]++;scene.remove(t.group);towers=towers.filter(x=>x!==t);selectedTower=null;renderUnits();updateSelection();toast('유닛을 보관함으로 회수했어.');};
+document.getElementById('coop').onclick=()=>toast('협동 모드는 실시간 서버 연결이 필요해. 다음 업데이트에서 추가할 수 있어!');
+document.getElementById('reset').onclick=()=>location.reload();
+renderer.domElement.addEventListener('pointerdown',e=>{drag=true;lastX=e.clientX;lastY=e.clientY;});
+renderer.domElement.addEventListener('pointerup',e=>{if(!drag)return;const moved=Math.abs(e.clientX-lastX)+Math.abs(e.clientY-lastY);drag=false;if(moved>7)return;pointer.x=(e.clientX/innerWidth)*2-1;pointer.y=-(e.clientY/innerHeight)*2+1;raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects([...padMeshes,...towers.map(t=>t.group)],true);if(!hits.length)return;let obj=hits[0].object;while(obj.parent&&!obj.userData.padIndex&&obj.parent!==scene)obj=obj.parent;if(obj.userData.padIndex!==undefined){placeTower(obj.userData.padIndex);return;}const tower=towers.find(t=>t.group===obj||t.group===hits[0].object||t.group.children.includes(hits[0].object));if(tower){selectedTower=tower;selectedUnit=tower.def.id;towers.forEach(t=>t.aura.visible=t===tower);updateSelection();renderUnits();}});
+renderer.domElement.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;const offset=camera.position.clone();const angle=Math.atan2(offset.x,offset.z)-dx*.006;const radius=Math.max(12,Math.min(29,Math.hypot(offset.x,offset.z)));camera.position.x=Math.sin(angle)*radius;camera.position.z=Math.cos(angle)*radius;camera.position.y=Math.max(9,Math.min(25,camera.position.y+dy*.04));camera.lookAt(0,0,0);});
+renderer.domElement.addEventListener('wheel',e=>{const f=e.deltaY>0?1.08:.92;camera.position.multiplyScalar(f);camera.position.y=Math.max(9,Math.min(27,camera.position.y));camera.lookAt(0,0,0);},{passive:true});
+function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.04);const time=clock.elapsedTime;
+ if(waveActive&&!gameOver){spawnTimer-=dt;if(spawnLeft>0&&spawnTimer<=0){spawnEnemy();spawnLeft--;spawnTimer=Math.max(.48,1.15-wave*.025);}if(spawnLeft===0&&enemies.filter(e=>!e.dead).length===0){waveActive=false;coins+=80+wave*12;updateStats();document.getElementById('waveBtn').disabled=false;document.getElementById('waveMsg').textContent='웨이브 방어 성공! 보너스 코인 획득';toast('웨이브 '+wave+' 클리어!');}}
+ for(const e of enemies){if(e.dead)continue;let remain=e.speed*dt;while(remain>0&&e.segment<path.length-1){const a=path[e.segment],b=path[e.segment+1],len=a.distanceTo(b),left=len-e.progress,step=Math.min(remain,left);e.progress+=step;remain-=step;const f=e.progress/len;e.group.position.lerpVectors(a,b,f);e.group.position.y=.05+Math.sin(time*5+e.segment)*.025;if(e.progress>=len-.001){e.segment++;e.progress=0;}}if(e.segment>=path.length-1){e.dead=true;lives--;updateStats();scene.remove(e.group);if(lives<=0){gameOver=true;waveActive=false;document.getElementById('waveMsg').textContent='기지가 함락됐어! 다시 시작해 봐.';document.getElementById('waveBtn').disabled=true;toast('게임 오버!');}}else{e.group.rotation.y=Math.atan2(path[Math.min(e.segment+1,path.length-1)].x-path[e.segment].x,path[Math.min(e.segment+1,path.length-1)].z-path[e.segment].z);}}
+ for(const t of towers){t.cool-=dt;let target=null,best=Infinity;for(const e of enemies){if(e.dead)continue;const d=Math.hypot(e.group.position.x-t.x,e.group.position.z-t.z);if(d<=t.def.range&&d<best){best=d;target=e;}}if(target){t.group.rotation.y=Math.atan2(target.group.position.x-t.x,target.group.position.z-t.z);t.arms[0].rotation.x=-.55+Math.sin(time*8)*.06;t.arms[1].rotation.x=-.55+Math.sin(time*8)*.06;if(t.cool<=0)shoot(t,target);}else{t.arms.forEach((a,i)=>a.rotation.x=Math.sin(time*2+i)*.06);}}
+ for(let i=shots.length-1;i>=0;i--){const s=shots[i];if(!s.target||s.target.dead){scene.remove(s.mesh);shots.splice(i,1);continue;}const target=s.target.group.position.clone();target.y=.95;const dir=target.sub(s.mesh.position),dist=dir.length(),step=s.speed*dt;if(dist<step+.13){hit(s.target,s.damage);const burst=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.65}));burst.position.copy(s.mesh.position);scene.add(burst);scene.remove(burst);scene.remove(s.mesh);shots.splice(i,1);}else{s.mesh.position.add(dir.normalize().multiplyScalar(step));}}
+ for(const e of enemies.filter(e=>e.dead)){scene.remove(e.group);}enemies=enemies.filter(e=>!e.dead||e.group.parent);
+ if(selectedTower){selectedTower.aura.visible=true;}renderer.render(scene,camera);}
+const clock=new THREE.Clock();renderUnits();updateStats();updateSelection();animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body>
+</html>
