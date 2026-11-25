@@ -34,11 +34,31 @@ button:hover{filter:brightness(1.18)}button:disabled{opacity:.4;cursor:not-allow
 #modal .box{width:min(390px,calc(100vw - 30px));padding:22px;text-align:center}
 #modal h2{margin:0 0 8px}.result{font-size:54px;margin:12px}
 #waveMsg{color:var(--gold);font-weight:800;font-size:12px;margin:6px 0}
+#lobby{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:18px;background:linear-gradient(135deg,rgba(5,12,25,.96),rgba(13,32,55,.94)),radial-gradient(circle at 80% 20%,#1b5570,transparent 45%);}
+#lobbyShell{width:min(1050px,100%);max-height:94vh;overflow:auto;padding:22px;border:1px solid #6dcfff44;border-radius:22px;background:linear-gradient(145deg,#10243aee,#0a1425f5);box-shadow:0 24px 80px #0009}
+#lobbyHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+#lobbyHeader h1{margin:0;color:#69e6ff;font-size:clamp(24px,4vw,36px)}
+#lobbyHeader small{color:#9bb5d1}
+#lobbyNav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
+#lobbyNav button.active{background:linear-gradient(135deg,#087d9c,#3158a9);border-color:#55e5ff}
+#lobbyBody{min-height:310px}
+.lobbyGrid{display:grid;grid-template-columns:1.35fr 1fr;gap:14px}
+.lobbyCard{padding:18px;border:1px solid #8eb9e633;border-radius:16px;background:#ffffff09}
+.lobbyCard h2{margin:0 0 12px;font-size:19px;color:#d5ecff}
+.lobbyMuted{color:#9fb2ca;font-size:13px;line-height:1.7}
+.lobbyBig{font-size:34px;font-weight:900;color:#67e4ff;margin:8px 0}
+.lobbyAction{width:100%;padding:14px;margin-top:10px;font-size:15px}
+.playerLine{display:flex;justify-content:space-between;align-items:center;padding:11px;border-radius:10px;background:#ffffff0b;margin-top:8px}
+.playerDot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#58df9b;margin-right:8px}
+.lobbyEmpty{padding:35px 12px;text-align:center;border:1px dashed #8eb9e655;border-radius:14px;color:#9fb2ca;line-height:1.8}
+#top,#left,#right,#bottom{display:none}
+@media(max-width:700px){#lobbyShell{padding:14px}#lobbyHeader{align-items:flex-start;flex-direction:column}.lobbyGrid{grid-template-columns:1fr}#lobbyBody{min-height:260px}.lobbyCard{padding:14px}} 
 @media(max-width:700px){#left{top:auto;bottom:105px;left:8px;width:165px;padding:9px}#right{top:70px;right:8px;width:155px;padding:9px}#unitList{max-height:26vh}.stat{padding:7px 9px;font-size:11px}#brand{font-size:16px;padding:8px}#bottom{bottom:7px;padding:8px}button{padding:8px;font-size:11px}#hint{font-size:10px}}
 </style>
 </head>
 <body>
 <div id="game"></div>
+<div id="lobby"><div id="lobbyShell"><div id="lobbyHeader"><div><h1>🚽 토타디</h1><small>타워 디펜스 · 로비</small></div><div class="lobbyMuted">현재 브라우저 세션</div></div><nav id="lobbyNav"><button data-page="home" class="active">🏠 로비</button><button data-page="summon">✨ 유닛 소환</button><button data-page="units">🎒 내 유닛</button><button data-page="quests">📜 퀘스트</button></nav><main id="lobbyBody"></main></div></div>
 <div id="top">
  <div id="brand" class="panel">🚽 토타디 <span style="font-size:10px;color:#9fb4d4">3D DEFENSE</span></div>
  <div id="stats">
@@ -54,7 +74,8 @@ button:hover{filter:brightness(1.18)}button:disabled{opacity:.4;cursor:not-allow
 </aside>
 <aside id="right" class="panel">
  <h3>🎮 작전 메뉴</h3>
- <button class="action gold" id="gacha">🎲 유닛 뽑기 · 100</button>
+ <button class="action" id="lobbyBtn">🏠 로비로</button>
+ <button class="action gold" id="gacha" disabled>✨ 유닛 소환 (유닛 설정 후)</button>
  <button class="action primary" id="waveBtn">▶ 웨이브 시작</button>
  <button class="action" id="upgrade" disabled>⬆ 선택 유닛 강화</button>
  <button class="action" id="sell" disabled>↩ 선택 유닛 회수</button>
@@ -121,7 +142,25 @@ function shoot(t,e){const from=new THREE.Vector3(t.x,1.75,t.z),to=e.group.positi
 function hit(e,damage){if(e.dead)return;e.hp-=damage;e.hitFlash=.12;if(e.hp<=0){e.dead=true;coins+=18+Math.floor(wave*1.5);updateStats();}else{e.hpFg.scale.x=Math.max(.01,e.hp/e.maxHp);e.hpFg.position.x=-(.86*(1-e.hp/e.maxHp))/2;}}
 function startWave(){if(waveActive||gameOver)return;wave++;waveActive=true;spawnLeft=5+wave*2;spawnTimer=.3;document.getElementById('waveMsg').textContent='적 접근 중! 남은 적 '+spawnLeft;document.getElementById('waveBtn').disabled=true;updateStats();}
 document.getElementById('waveBtn').onclick=startWave;
-document.getElementById('gacha').onclick=()=>{if(coins<100){toast('코인이 부족해!');return;}coins-=100;const roll=Math.random()*100;let acc=0,got=unitDefs[0];for(const u of unitDefs){acc+=u.chance;if(roll<=acc){got=u;break;}}owned[got.id]++;updateStats();renderUnits();document.getElementById('modalEmoji').textContent=got.emoji;document.getElementById('modalName').textContent=got.name+' · '+got.rarity;document.getElementById('modalDesc').textContent=got.desc;document.getElementById('modal').style.display='grid';};
+
+const lobby=document.getElementById('lobby'),lobbyBody=document.getElementById('lobbyBody');
+function renderLobby(page='home'){
+ document.querySelectorAll('#lobbyNav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+ if(page==='home'){
+  lobbyBody.innerHTML=`<div class="lobbyGrid"><section class="lobbyCard"><h2>환영해!</h2><div class="lobbyBig">토타디</div><p class="lobbyMuted">유닛을 모으고 배치해서 몰려오는 적을 막아내는 타워 디펜스 게임이야.</p><button class="primary lobbyAction" id="playGame">▶ 게임 플레이</button></section><section class="lobbyCard"><h2>👥 현재 플레이어</h2><div class="lobbyBig">1명</div><div class="playerLine"><span><i class="playerDot"></i>나 (현재 브라우저)</span><small>접속 중</small></div><p class="lobbyMuted">실제 다른 사람들의 접속자 목록은 온라인 서버를 연결한 뒤 표시할 수 있어.</p></section><section class="lobbyCard"><h2>📢 안내</h2><p class="lobbyMuted">유닛 이름, 외형, 등급, 공격 방식은 네가 정할 때까지 임의로 넣지 않았어.</p></section><section class="lobbyCard"><h2>🪙 보유 코인</h2><div class="lobbyBig">${coins}</div><p class="lobbyMuted">플레이를 진행하면 코인을 얻을 수 있어.</p></section></div>`;
+  document.getElementById('playGame').onclick=()=>{lobby.style.display='none';['top','left','right','bottom'].forEach(id=>document.getElementById(id).style.display=id==='top'?'flex':'block');toast('전투 준비 완료! 유닛 설정 후 배치할 수 있어.');};
+ }else if(page==='summon'){
+  lobbyBody.innerHTML=`<section class="lobbyCard"><h2>✨ 유닛 소환</h2><div class="lobbyEmpty">아직 등록된 유닛이 없어.<br>네가 유닛을 정해주면 소환 목록과 소환 연출을 추가할게.<br><button class="gold lobbyAction" disabled>유닛 설정 대기 중</button></div><p class="lobbyMuted">현재는 유닛 종류와 소환 확률을 임의로 만들지 않았어.</p></section>`;
+ }else if(page==='units'){
+  lobbyBody.innerHTML=`<section class="lobbyCard"><h2>🎒 내 유닛</h2><div class="lobbyEmpty">보유한 유닛이 아직 없어.<br>네가 정한 유닛부터 차례대로 등록할게.</div></section>`;
+ }else{
+  lobbyBody.innerHTML=`<section class="lobbyCard"><h2>📜 퀘스트</h2><div class="lobbyEmpty">퀘스트 시스템 준비 중이야.<br>일일 퀘스트와 주간 퀘스트를 추가할 수 있어.</div></section>`;
+ }
+}
+document.querySelectorAll('#lobbyNav button').forEach(b=>b.addEventListener('click',()=>renderLobby(b.dataset.page)));
+document.getElementById('lobbyBtn').onclick=()=>{lobby.style.display='grid';['top','left','right','bottom'].forEach(id=>document.getElementById(id).style.display='none');renderLobby('home');};
+
+document.getElementById('gacha').onclick=()=>toast('유닛 종류와 능력치는 네가 정한 뒤 추가할게!');
 document.getElementById('modalClose').onclick=()=>document.getElementById('modal').style.display='none';
 document.getElementById('upgrade').onclick=()=>{if(!selectedTower)return;const cost=Math.round(90*selectedTower.level);if(coins<cost)return;coins-=cost;selectedTower.level++;updateStats();updateSelection();toast('강화 완료! 공격력이 올랐어.');};
 document.getElementById('sell').onclick=()=>{if(!selectedTower)return;const t=selectedTower;owned[t.def.id]++;scene.remove(t.group);towers=towers.filter(x=>x!==t);selectedTower=null;renderUnits();updateSelection();toast('유닛을 보관함으로 회수했어.');};
@@ -138,7 +177,7 @@ function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDel
  for(let i=shots.length-1;i>=0;i--){const s=shots[i];if(!s.target||s.target.dead){scene.remove(s.mesh);shots.splice(i,1);continue;}const target=s.target.group.position.clone();target.y=.95;const dir=target.sub(s.mesh.position),dist=dir.length(),step=s.speed*dt;if(dist<step+.13){hit(s.target,s.damage);const burst=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),new THREE.MeshBasicMaterial({color:s.color,transparent:true,opacity:.65}));burst.position.copy(s.mesh.position);scene.add(burst);scene.remove(burst);scene.remove(s.mesh);shots.splice(i,1);}else{s.mesh.position.add(dir.normalize().multiplyScalar(step));}}
  for(const e of enemies.filter(e=>e.dead)){scene.remove(e.group);}enemies=enemies.filter(e=>!e.dead||e.group.parent);
  if(selectedTower){selectedTower.aura.visible=true;}renderer.render(scene,camera);}
-const clock=new THREE.Clock();renderUnits();updateStats();updateSelection();animate();
+const clock=new THREE.Clock();renderUnits();updateStats();updateSelection();renderLobby('home');animate();
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 </script>
 </body>
