@@ -54,6 +54,38 @@ button:hover{filter:brightness(1.18)}button:disabled{opacity:.4;cursor:not-allow
 #top,#left,#right,#bottom{display:none}
 @media(max-width:700px){#lobby{grid-template-columns:76px 1fr;grid-template-rows:64px 1fr;padding:7px;gap:7px}#lobbyHeader{padding:7px 10px}#lobbyHeader h1{font-size:19px}#lobbyHeader small{display:none}#lobbyHeader .lobbyMuted{font-size:10px}#lobbyNav{padding:6px;gap:5px}#lobbyNav button{font-size:0;text-align:center;padding:12px 3px}#lobbyNav button:first-letter{font-size:19px}#lobbyBody{max-height:calc(100vh - 82px)}.lobbyGrid{grid-template-columns:1fr}#lobbyBody{min-height:260px}.lobbyCard{padding:12px}.lobbyBig{font-size:26px}} 
 @media(max-width:700px){#left{top:auto;bottom:105px;left:8px;width:165px;padding:9px}#right{top:70px;right:8px;width:155px;padding:9px}#unitList{max-height:26vh}.stat{padding:7px 9px;font-size:11px}#brand{font-size:16px;padding:8px}#bottom{bottom:7px;padding:8px}button{padding:8px;font-size:11px}#hint{font-size:10px}}
+
+/* === PLAZA REMASTER === */
+:root{--panel:rgba(8,19,35,.94);--line:rgba(137,205,255,.28);--cyan:#68e8ff;--gold:#ffd66b}
+body{background:#101a2b}
+#lobby{grid-template-columns:205px minmax(0,1fr);grid-template-rows:70px 1fr;gap:12px;padding:12px;background:linear-gradient(90deg,rgba(2,10,23,.84),rgba(3,13,27,.12) 48%,rgba(2,10,23,.32))}
+#lobbyHeader{border:1px solid #83dfff55;border-radius:13px;background:linear-gradient(100deg,#061426f5,#103553eF);box-shadow:0 8px 30px #0005}
+#lobbyHeader h1{font-size:clamp(21px,2.4vw,31px);letter-spacing:1px}
+#lobbyNav{border:1px solid #8bdcff44;border-radius:13px;background:#071728ed;box-shadow:0 12px 32px #0006}
+#lobbyNav button{border:1px solid transparent;background:#ffffff08;min-height:48px;transition:.15s}
+#lobbyNav button:hover{background:#ffffff17;transform:translateX(2px)}
+#lobbyNav button.active{background:linear-gradient(100deg,#087d9c,#3158a9);border-color:#63e6ff;box-shadow:inset 3px 0 #9df4ff,0 5px 18px #008fb944}
+#lobbyBody{width:min(680px,100%);max-height:calc(100vh - 100px)}
+#lobbyBody .lobbyCard{border:1px solid #8bdcff44;border-radius:14px;background:linear-gradient(145deg,rgba(6,23,42,.97),rgba(8,18,35,.96));box-shadow:0 18px 50px #0008;padding:22px}
+#lobbyBody .lobbyCard h2{font-size:22px;letter-spacing:.2px}
+#lobbyBody .lobbyBig{font-size:clamp(34px,5vw,54px);line-height:1.08;letter-spacing:-1px;text-shadow:0 5px 25px #12c8ff45}
+#lobbyBody .lobbyAction{border-radius:10px;min-height:49px;box-shadow:0 7px 20px #008fc733}
+#lobbyBody .lobbyTiles{gap:9px}
+#lobbyBody .lobbyTile{border:1px solid #83dfff35;background:linear-gradient(145deg,#17324d,#0c1b31);border-radius:11px;min-height:82px;color:#f4f8ff}
+#lobbyBody .lobbyTile:hover{border-color:#67e8ff;background:linear-gradient(145deg,#1a4966,#102947);transform:translateY(-2px)}
+#lobbyBody .lobbyPill{background:#102a43;border-color:#76cfff38}
+#lobbyBody .playerLine{background:#10243a;border:1px solid #ffffff12}
+#lobbyBody .lobbyEmpty{background:#071729;border:1px dashed #72c9e955;border-radius:12px}
+#lobbyBody .field{border:1px solid #4d789b;background:#071729}
+#top{top:10px;left:10px;right:10px}
+#brand{border-radius:10px;background:#071729ed;border-color:#55dfff66}
+.stat{border-radius:10px;background:#071729ed;border-color:#55dfff55}
+#left,#right{border-radius:12px;background:#071729ed;border-color:#65dfff55}
+#bottom{border-radius:12px;background:#071729ed;border-color:#65dfff55}
+.unit{border-radius:9px;background:#10243a;border-color:#ffffff20}
+.unit.selected{box-shadow:inset 3px 0 #68e8ff}
+@media(max-width:700px){#lobby{grid-template-columns:62px minmax(0,1fr);grid-template-rows:58px 1fr;padding:6px;gap:6px}#lobbyNav{border-radius:10px;padding:5px}#lobbyNav button{min-height:43px;padding:9px 2px}#lobbyBody{max-height:calc(100vh - 72px)}#lobbyBody .lobbyCard{padding:14px}#lobbyBody .lobbyBig{font-size:32px}}
+
 </style>
 </head>
 <body>
@@ -142,6 +174,14 @@ makePortal('BATTLE MATCH',-12,2,0x48caff,'⚔️');makePortal('UNIT SUMMON',0,-1
 /* fountain centre */
 const fountain=new THREE.Group();fountain.position.set(0,0,0);lobbyScene.add(fountain);lcyl(fountain,4,4.5,.7,lobbyM.blue,0,.45,0,48);lcyl(fountain,2.6,3,.5,lobbyM.white,0,.95,0,48);lcyl(fountain,.5,.8,2,lobbyM.gold,0,2,0,24);const water=new THREE.Mesh(new THREE.CylinderGeometry(2.7,2.7,.08,48),new THREE.MeshStandardMaterial({color:0x4ccfff,transparent:true,opacity:.65,metalness:.25,roughness:.1}));water.position.y=1.25;fountain.add(water);
 for(let i=0;i<12;i++){const a=i/12*Math.PI*2;const lamp=lcyl(lobbyScene,.18,.25,3,lobbyM.dark,Math.cos(a)*18,1.5,Math.sin(a)*18,12);lcyl(lobbyScene,.32,.32,.22,lobbyM.gold,Math.cos(a)*18,3.1,Math.sin(a)*18,16);}
+
+/* plaza details: street trees, benches, signboards and spawn lights */
+const treeMat=lobbyMat(0x28794b),trunkMat=lobbyMat(0x79543a),benchMat=lobbyMat(0x34495e);
+for(let i=0;i<10;i++){const a=i/10*Math.PI*2,r=29;const x=Math.cos(a)*r,z=Math.sin(a)*r;lcyl(lobbyScene,.22,.3,2.1,trunkMat,x,1,z,10);const crown=new THREE.Mesh(new THREE.IcosahedronGeometry(1.35,1),treeMat);crown.position.set(x,2.65,z);crown.scale.set(1,1.15,1);crown.castShadow=true;lobbyScene.add(crown);const crown2=new THREE.Mesh(new THREE.IcosahedronGeometry(.85,1),lobbyMat(0x39965a));crown2.position.set(x+.35,3.35,z-.15);lobbyScene.add(crown2);}
+for(let i=0;i<4;i++){const a=i*Math.PI/2,x=Math.cos(a)*13,z=Math.sin(a)*13;const bench=new THREE.Group();bench.position.set(x,0,z);bench.rotation.y=-a; lobbyScene.add(bench);lbox(bench,2.2,.16,.65,benchMat,0,.65,0);lbox(bench,2.2,.65,.14,benchMat,0,1,-.25);for(const sx of [-.8,.8])lbox(bench,.13,.65,.5,lobbyM.dark,sx,.32,0);}
+const signBase=new THREE.Group();signBase.position.set(-20,0,-14);lobbyScene.add(signBase);lbox(signBase,5,.35,.5,lobbyM.dark,0,4,0);lbox(signBase,4.65,2.4,.18,lobbyM.blue,0,5.35,0);lbox(signBase,4.2,1.95,.08,lobbyM.dark,0,5.35,.12);
+for(let i=0;i<3;i++){const glow=new THREE.Mesh(new THREE.TorusGeometry(1.05+i*.22,.035,8,48),new THREE.MeshBasicMaterial({color:[0x52dfff,0xffd15c,0xb18cff][i],transparent:true,opacity:.8}));glow.position.set(0,1.7,0);signBase.add(glow);}
+
 /* spawn platform and blocky player avatar */
 const spawn=new THREE.Group();spawn.position.set(0,0,10);lobbyScene.add(spawn);lcyl(spawn,1.8,2.1,.35,lobbyM.gold,0,.25,0,32);lcyl(spawn,1.45,1.6,.18,lobbyM.blue,0,.5,0,32);
 const avatar=new THREE.Group();avatar.position.set(0,.6,10);lobbyScene.add(avatar);lbox(avatar,.95,1.1,.48,lobbyM.blue,0,1.15,0);lbox(avatar,.78,.72,.7,lobbyM.skin||lobbyMat(0xf0c19a),0,2.1,0);lbox(avatar,.82,.2,.74,lobbyM.dark,0,2.52,0);lbox(avatar,.22,.12,.04,lobbyM.white,-.18,2.14,.37);lbox(avatar,.22,.12,.04,lobbyM.white,.18,2.14,.37);lbox(avatar,.12,.12,.05,lobbyM.dark,-.18,2.14,.4);lbox(avatar,.12,.12,.05,lobbyM.dark,.18,2.14,.4);for(const s of [-1,1]){lbox(avatar,.28,.85,.3,lobbyM.dark,s*.28,.25,0);lbox(avatar,.25,.85,.28,lobbyM.blue,s*.65,1.25,0);}
@@ -212,7 +252,7 @@ function renderLobby(page='home'){
  document.querySelectorAll('#lobbyNav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
  const stats='<div class="lobbyStats"><span class="lobbyPill">🪙 '+coins.toLocaleString()+'</span><span class="lobbyPill">💎 '+playerSave.gems+'</span><span class="lobbyPill">⭐ Lv.'+playerSave.level+'</span></div>';
  if(page==='home'){
-  lobbyBody.innerHTML='<section class="lobbyCard"><div style="font-size:11px;letter-spacing:3px;color:#66dfff;font-weight:900">WELCOME TO THE PLAZA</div><h2 style="font-size:26px;margin:8px 0">'+playerSave.name+'의 로비</h2><div class="lobbyBig">전투 준비 완료?</div><p class="lobbyMuted">중앙 광장에 소환장, 전투 매칭 포털, 거래 광장이 있어. 왼쪽 메뉴에서 이동하거나 포털 메뉴를 선택해.</p><button class="primary lobbyAction" id="playGame">⚔️ 전투 매칭하기</button><div class="lobbyTiles"><button class="lobbyTile" data-go="summon"><b>✨</b>유닛 소환</button><button class="lobbyTile" data-go="units"><b>🎒</b>유닛 보관함</button><button class="lobbyTile" data-go="shop"><b>🛒</b>상점</button><button class="lobbyTile" data-go="collection"><b>📖</b>도감</button><button class="lobbyTile" data-go="quests"><b>📜</b>퀘스트</button><button class="lobbyTile" data-go="profile"><b>👤</b>프로필</button></div><div class="playerLine"><span>🟢 '+playerSave.name+' · Lv.'+playerSave.level+'</span><b>🪙 '+coins.toLocaleString()+'　💎 '+playerSave.gems+'</b></div></section>';
+  lobbyBody.innerHTML='<section class="lobbyCard"><div style="font-size:11px;letter-spacing:3px;color:#66dfff;font-weight:900">TOILET DEFENSE · MAIN PLAZA</div><h2 style="font-size:26px;margin:8px 0">'+playerSave.name+'의 기지</h2><div class="lobbyBig">방어 작전을 시작하자!</div><p class="lobbyMuted">전투 발판에서 맵과 난이도를 고르고, 소환장에서 유닛을 준비해. 광장 포털에 직접 다가가도 입장할 수 있어.</p><button class="primary lobbyAction" id="playGame">⚔️ 전투 발판으로 이동</button><div class="lobbyTiles"><button class="lobbyTile" data-go="summon"><b>✨</b>유닛 소환</button><button class="lobbyTile" data-go="units"><b>🎒</b>유닛 보관함</button><button class="lobbyTile" data-go="shop"><b>🛒</b>상점</button><button class="lobbyTile" data-go="collection"><b>📖</b>도감</button><button class="lobbyTile" data-go="quests"><b>📜</b>퀘스트</button><button class="lobbyTile" data-go="profile"><b>👤</b>프로필</button></div><div class="playerLine"><span>🟢 '+playerSave.name+' · Lv.'+playerSave.level+'</span><b>🪙 '+coins.toLocaleString()+'　💎 '+playerSave.gems+'</b></div></section>';
   document.getElementById('playGame').onclick=()=>renderLobby('play');lobbyBody.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>renderLobby(b.dataset.go));
  }else if(page==='play'){
   lobbyBody.innerHTML='<section class="lobbyCard"><div style="color:#63dfff;font-size:11px;font-weight:900;letter-spacing:2px">MATCH PLATFORM · 01</div><h2 style="font-size:25px">⚔️ 전투 매칭 발판</h2><div style="display:flex;gap:12px;align-items:center"><div style="font-size:48px">🗺️</div><div><b style="font-size:18px">도시 방어선</b><div class="lobbyMuted">스토리 모드 · 최대 5명 파티</div></div></div><div class="playerLine"><span>대기 인원</span><b>1 / 5 <small style="color:#9fb2ca">(로컬 미리보기)</small></b></div><h3 style="margin-top:16px">난이도 투표</h3><div class="lobbyTiles"><button class="lobbyTile" data-mode="일반"><b>🟦</b>일반</button><button class="lobbyTile" data-mode="어려움"><b>🔥</b>어려움</button><button class="lobbyTile" data-mode="무한"><b>♾️</b>무한</button></div><p class="lobbyMuted">선택한 난이도: <b>'+playerSave.selectedMode+'</b></p><button class="primary lobbyAction" id="enterBattle">준비 완료 · 전투 시작</button><p class="lobbyMuted">다른 플레이어 표시와 실제 파티 매칭은 온라인 서버 연결 후 작동해.</p></section>';
